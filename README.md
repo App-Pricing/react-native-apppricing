@@ -5,15 +5,15 @@ AppPricing SDK is an intelligent pricing optimization tool for mobile applicatio
 ## Installation
 
 ```sh
-npm install react-native-apppricing
+npm install @apppricing/react-native-apppricing
 # or
-yarn add react-native-apppricing
+yarn add @apppricing/react-native-apppricing
 ```
 
 ## Usage
 
 ```js
-import AppPricing from 'react-native-apppricing';
+import AppPricing from '@apppricing/react-native-apppricing';
 
 // Initialize the SDK with your API key
 await AppPricing.initialize('YOUR_API_KEY');
