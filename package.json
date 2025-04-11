@@ -56,7 +56,8 @@
   },
   "homepage": "https://github.com/apppricing/react-native-apppricing#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "dependencies": {
     "react-native-device-info": "^10.12.0",
