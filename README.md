@@ -10,6 +10,23 @@ npm install @apppricing/react-native-apppricing
 yarn add @apppricing/react-native-apppricing
 ```
 
+### Required Dependencies
+
+This SDK requires the following dependencies:
+
+```sh
+# Install required dependencies
+npm install react-native-device-info react-native-localize
+# or
+yarn add react-native-device-info react-native-localize
+```
+
+For iOS, you may need to run:
+
+```sh
+cd ios && pod install
+```
+
 ## Usage
 
 ```js

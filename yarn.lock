@@ -38,13 +38,13 @@ __metadata:
     react: 18.3.1
     react-native: 0.76.9
     react-native-builder-bob: ^0.40.4
-    react-native-device-info: ^10.12.0
-    react-native-localize: ^3.4.1
     release-it: ^17.10.0
     typescript: ^5.2.2
   peerDependencies:
     react: "*"
     react-native: "*"
+    react-native-device-info: ">=10.0.0"
+    react-native-localize: ">=3.0.0"
   languageName: unknown
   linkType: soft
 
@@ -10119,29 +10119,6 @@ __metadata:
   bin:
     bob: bin/bob
   checksum: 20fc633d6cb311d76c139064d1bf45c36f100ad5f7799d9a21d0c5d85f6d588740f2604e1014730071058a2d55e95f87363674987860fa0e246c547219771ad6
-  languageName: node
-  linkType: hard
-
-"react-native-device-info@npm:^10.12.0":
-  version: 10.14.0
-  resolution: "react-native-device-info@npm:10.14.0"
-  peerDependencies:
-    react-native: "*"
-  checksum: bf0630beef9c391498122cc66708fa9922bf8335701b0fe7f30642f509d60441338607a89daaa86eb9ced675926ee948da034c63c03659053ce34c10d50bd9e3
-  languageName: node
-  linkType: hard
-
-"react-native-localize@npm:^3.4.1":
-  version: 3.4.1
-  resolution: "react-native-localize@npm:3.4.1"
-  peerDependencies:
-    react: ">=18.1.0"
-    react-native: ">=0.70.0"
-    react-native-macos: ">=0.70.0"
-  peerDependenciesMeta:
-    react-native-macos:
-      optional: true
-  checksum: 2ec4c1992d88c208af3688e9be128ef16c293280677d5493bcae7cee7f66f59c73b91db2370b1879383b9ae5618caab3d569e51024b11d976a732afd5440e87d
   languageName: node
   linkType: hard
 
