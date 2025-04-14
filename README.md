@@ -12,13 +12,13 @@ yarn add @apppricing/react-native-apppricing
 
 ### Required Dependencies
 
-This SDK requires the following dependencies:
+This SDK requires the following dependency:
 
 ```sh
-# Install required dependencies
-npm install react-native-device-info react-native-localize
+# Install required dependency
+npm install react-native-device-info
 # or
-yarn add react-native-device-info react-native-localize
+yarn add react-native-device-info
 ```
 
 For iOS, you may need to run:
@@ -78,15 +78,15 @@ interface DeviceData {
   device_id: string;       // Unique device identifier
   hash: string;            // Device hash
   distinct: boolean;       // Whether this is a distinct device
-  country: string;         // User's country
-  region: string;          // User's region
-  city: string;            // User's city
-  timezone: string;        // User's timezone
+  country: string;         // User's country (retrieved via IP geolocation)
+  region: string;          // User's region (retrieved via IP geolocation)
+  city: string;            // User's city (retrieved via IP geolocation)
+  timezone: string;        // User's timezone (retrieved via IP geolocation)
   first_seen: string;      // When device was first seen (ISO date)
   last_seen: string;       // When device was last seen (ISO date)
   engagement_time: number; // Total engagement time in seconds
   session_count: number;   // Number of sessions
-  language: string;        // Device language
+  language: string;        // Language based on country code
   marka: string;           // Device manufacturer/brand
   model: string;           // Device model
   os: string;              // Operating system (iOS/Android)

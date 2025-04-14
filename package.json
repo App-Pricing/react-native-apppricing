@@ -79,15 +79,13 @@
     "react-native": "0.76.9",
     "react-native-builder-bob": "^0.40.4",
     "react-native-device-info": "^14.0.4",
-    "react-native-localize": "^3.4.1",
     "release-it": "^17.10.0",
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-device-info": ">=10.0.0",
-    "react-native-localize": ">=3.0.0"
+    "react-native-device-info": ">=10.0.0"
   },
   "packageManager": "yarn@3.6.1",
   "jest": {

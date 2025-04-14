@@ -1,6 +1,5 @@
 import { Dimensions } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import * as RNLocalize from 'react-native-localize';
 
 interface DeviceData {
   device_id: string;
@@ -23,6 +22,18 @@ interface DeviceData {
   screen_width: number;
 }
 
+interface LocationData {
+  ip: string;
+  country_code: string;
+  country: string;
+  city: string;
+  region: string;
+  region_code: string;
+  timezone: string;
+  longitude: string;
+  latitude: string;
+}
+
 interface AppPricing {
   apiKey: string;
   deviceId: string;
@@ -31,13 +42,10 @@ interface AppPricing {
 }
 
 interface Plan {
-  id: string;
+  id: number;
   name: string;
-  description: string;
-  price: number;
-  currency: string;
-  interval: string;
-  features: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 const APP_PRICING_BASE_URL = 'https://dash.apppricing.com/api';
@@ -62,14 +70,6 @@ const getDeviceData = async (): Promise<DeviceData> => {
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-  // Get device locale
-  const locales = RNLocalize.getLocales();
-  const locale =
-    locales.length > 0 ? (locales[0]?.languageTag ?? 'en-US') : 'en-US';
-
-  // Get timezone
-  const timezone = RNLocalize.getTimeZone();
-
   // Get manufacturer (brand)
   const brand = DeviceInfo.getBrand();
 
@@ -77,19 +77,100 @@ const getDeviceData = async (): Promise<DeviceData> => {
   const operatingSystem = DeviceInfo.getSystemName();
   const osVersion = DeviceInfo.getSystemVersion();
 
+  // Default values before API call
+  let country = 'unknown';
+  let region = 'unknown';
+  let city = 'unknown';
+  let timezone = 'UTC';
+  let language = 'en-US';
+
+  try {
+    const locationResponse = await fetch(
+      'https://ifconfig.mehmetcansahin.com/json'
+    );
+    if (locationResponse.ok) {
+      const locationData: LocationData = await locationResponse.json();
+      country = locationData.country || 'unknown';
+      region = locationData.region || 'unknown';
+      city = locationData.city || 'unknown';
+
+      // Use API timezone if available
+      if (locationData.timezone) {
+        timezone = locationData.timezone;
+      }
+
+      // Generate locale from country_code if available
+      if (locationData.country_code) {
+        const countryCode = locationData.country_code;
+
+        // Direct mapping from country code to primary language
+        const countryToLanguage: Record<string, string> = {
+          US: 'en',
+          GB: 'en',
+          CA: 'en',
+          AU: 'en',
+          NZ: 'en',
+          FR: 'fr',
+          DE: 'de',
+          IT: 'it',
+          ES: 'es',
+          PT: 'pt',
+          BR: 'pt',
+          NL: 'nl',
+          BE: 'nl',
+          TR: 'tr',
+          RU: 'ru',
+          JP: 'ja',
+          CN: 'zh',
+          TW: 'zh',
+          KR: 'ko',
+          AR: 'es',
+          MX: 'es',
+          CL: 'es',
+          CO: 'es',
+          IN: 'hi',
+          PL: 'pl',
+          SE: 'sv',
+          NO: 'no',
+          DK: 'da',
+          FI: 'fi',
+          CZ: 'cs',
+          GR: 'el',
+          IL: 'he',
+          SA: 'ar',
+          AE: 'ar',
+          TH: 'th',
+          VN: 'vi',
+          ID: 'id',
+          MY: 'ms',
+          PH: 'tl',
+        };
+
+        // Get the language for this country or default to English
+        const primaryLanguage = countryToLanguage[countryCode] || 'en';
+
+        // Create a locale string
+        language = `${primaryLanguage}-${countryCode}`;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch location data:', error);
+    // Using default values if API fails
+  }
+
   return {
     device_id: deviceId,
     hash: hash,
     distinct: true,
-    country: 'unknown', // Would need location permissions and geocoding
-    region: 'unknown', // Would need location permissions and geocoding
-    city: 'unknown', // Would need location permissions and geocoding
-    timezone: await timezone,
+    country: country,
+    region: region,
+    city: city,
+    timezone: timezone,
     first_seen: installDate,
     last_seen: now,
     engagement_time: 0, // This would need to be tracked over time
     session_count: 1, // Starting with 1, will be incremented by API
-    language: locale,
+    language: language,
     marka: brand,
     model: await DeviceInfo.getModel(),
     os: operatingSystem,
@@ -140,7 +221,7 @@ export const sendDeviceData = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': AppPricing.apiKey,
+        'X-API-KEY': AppPricing.apiKey,
       },
       body: JSON.stringify(deviceData),
     });
@@ -167,7 +248,7 @@ export const incrementSession = async (deviceId: string): Promise<boolean> => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': AppPricing.apiKey,
+          'X-API-KEY': AppPricing.apiKey,
         },
       }
     );
@@ -199,7 +280,7 @@ export const getAvailablePlans = async (): Promise<Plan[]> => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': AppPricing.apiKey,
+          'X-API-KEY': AppPricing.apiKey,
         },
       }
     );
@@ -208,8 +289,8 @@ export const getAvailablePlans = async (): Promise<Plan[]> => {
       throw new Error(`Failed to get available plans: ${response.status}`);
     }
 
-    const plans = await response.json();
-    return plans;
+    const data = await response.json();
+    return data.plans || [];
   } catch (error) {
     console.error('AppPricing: Failed to get available plans', error);
     return [];
