@@ -59,13 +59,10 @@ Returns a Promise that resolves to an array of Plan objects:
 
 ```ts
 interface Plan {
-  id: string;
+  id: number;
   name: string;
-  description: string;
-  price: number;
-  currency: string;
-  interval: string;
-  features: string[];
+  created_at: string;
+  updated_at: string;
 }
 ```
 
@@ -95,16 +92,6 @@ interface DeviceData {
   screen_width: number;    // Screen width in pixels
 }
 ```
-
-## Expo Compatibility
-
-⚠️ **Important note for Expo users**:
-
-This SDK contains native code and cannot be used with Expo Go. If you're using Expo, you need to:
-
-1. Use a development build (Expo Dev Client)
-2. Follow [Expo's guide on Development Builds](https://docs.expo.dev/development/introduction/)
-3. Add this library as a native module in your Expo config
 
 ## Contributing
 
