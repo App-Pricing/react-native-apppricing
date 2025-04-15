@@ -102,7 +102,6 @@ The SDK collects the following device information and sends it to the AppPricing
 interface DeviceData {
   device_id: string;       // Unique device identifier
   hash: string;            // Device fingerprint (different from device_id)
-  distinct: boolean;       // Whether this is a distinct device
   country: string;         // User's country (retrieved via IP geolocation)
   region: string;          // User's region (retrieved via IP geolocation)
   city: string;            // User's city (retrieved via IP geolocation)
@@ -112,7 +111,7 @@ interface DeviceData {
   engagement_time: number; // Total engagement time in seconds
   session_count: number;   // Number of sessions
   language: string;        // Language based on country code
-  marka: string;           // Device manufacturer/brand
+  brand: string;           // Device manufacturer/brand
   model: string;           // Device model
   os: string;              // Operating system (iOS/Android)
   os_version: string;      // OS version

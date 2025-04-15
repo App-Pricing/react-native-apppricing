@@ -21,7 +21,6 @@ const CONSTANTS = {
 interface DeviceData {
   device_id: string;
   hash: string;
-  distinct: boolean;
   country: string;
   region: string;
   city: string;
@@ -31,7 +30,7 @@ interface DeviceData {
   engagement_time: number;
   session_count: number;
   language: string;
-  marka: string;
+  brand: string;
   model: string;
   os: string;
   os_version: string;
@@ -314,7 +313,6 @@ const DeviceService = {
     return {
       device_id: deviceId,
       hash: hash,
-      distinct: true,
       country,
       region,
       city,
@@ -324,7 +322,7 @@ const DeviceService = {
       engagement_time: 0,
       session_count: 1,
       language,
-      marka: brand,
+      brand,
       model,
       os: operatingSystem,
       os_version: osVersion,
