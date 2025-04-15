@@ -197,7 +197,7 @@ const ApiService = {
   },
 
   async incrementSession(deviceId: string): Promise<boolean> {
-    const url = `${AppPricing.baseUrl}/device-data/${deviceId}/increment_session`;
+    const url = `${AppPricing.baseUrl}/device-data/${deviceId}/increment-session`;
     const response = await this.fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(),
