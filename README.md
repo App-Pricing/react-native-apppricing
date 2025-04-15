@@ -48,7 +48,7 @@ console.log('Available plans:', plans);
 
 ## API Reference
 
-### `initialize(apiKey: string, config?: AppPricingConfig): Promise<boolean>`
+### `initialize(apiKey: string, config?: Partial<AppPricingConfig>): Promise<boolean>`
 
 Initializes the AppPricing SDK with your API key and optional configuration. This function automatically:
 - Collects device information
@@ -61,8 +61,11 @@ Initializes the AppPricing SDK with your API key and optional configuration. Thi
 
 ```ts
 interface AppPricingConfig {
-  baseUrl?: string;        // API base URL (default: 'https://dash.apppricing.com/api')
-  enableLogging?: boolean; // Whether to enable debug logging (default: true)
+  apiKey: string;          // Your AppPricing API key
+  deviceId: string;        // Device identifier (auto-generated)
+  baseUrl: string;         // API base URL (default: 'https://dash.apppricing.com/api')
+  initialized: boolean;    // Whether SDK is initialized
+  enableLogging: boolean;  // Whether to enable debug logging (default: true)
 }
 ```
 
@@ -119,6 +122,17 @@ interface DeviceData {
   screen_width: number;    // Screen width in pixels
 }
 ```
+
+## Project Structure
+
+The SDK is organized into the following modules:
+
+- `config`: SDK configuration and state management
+- `types`: TypeScript type definitions
+- `utils`: Utility functions like logging
+- `services`:
+  - `api`: API service for handling network requests
+  - `device`: Device service for gathering device information
 
 ## Contributing
 
