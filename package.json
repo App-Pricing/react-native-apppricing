@@ -1,6 +1,6 @@
 {
   "name": "@apppricing/react-native-apppricing",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "AppPricing SDK is an intelligent pricing optimization tool for mobile applications.",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
