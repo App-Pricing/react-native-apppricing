@@ -176,12 +176,19 @@ const ApiService = {
 
   // API Endpoints
   async getLocationData(): Promise<LocationData | null> {
-    const response = await this.fetch<LocationData>(CONSTANTS.LOCATION_API_URL);
+    const response = await this.fetch<LocationData>(
+      CONSTANTS.LOCATION_API_URL,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
     return response.ok ? response.data || null : null;
   },
 
   async sendDeviceData(deviceData: DeviceData): Promise<boolean> {
-    const url = `${AppPricing.baseUrl}/device_data`;
+    const url = `${AppPricing.baseUrl}/device-data`;
     const response = await this.fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -191,7 +198,7 @@ const ApiService = {
   },
 
   async incrementSession(deviceId: string): Promise<boolean> {
-    const url = `${AppPricing.baseUrl}/device_data/${deviceId}/increment_session`;
+    const url = `${AppPricing.baseUrl}/device-data/${deviceId}/increment_session`;
     const response = await this.fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -205,7 +212,7 @@ const ApiService = {
       return [];
     }
 
-    const url = `${AppPricing.baseUrl}/device_data/${AppPricing.deviceId}/plans`;
+    const url = `${AppPricing.baseUrl}/device-data/${AppPricing.deviceId}/plans`;
     const response = await this.fetch<{ plans: Plan[] }>(url, {
       method: 'GET',
       headers: this.getAuthHeaders(),
