@@ -1,6 +1,23 @@
 import { Dimensions } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
+// Constants
+const CONSTANTS = {
+  BASE_URL: 'https://dash.apppricing.com/api',
+  LOCATION_API_URL: 'https://ifconfig.mehmetcansahin.com/json',
+  DEFAULT_COUNTRY: 'unknown',
+  DEFAULT_REGION: 'unknown',
+  DEFAULT_CITY: 'unknown',
+  DEFAULT_TIMEZONE: 'UTC',
+  DEFAULT_LANGUAGE: 'en-US',
+  HEADERS: {
+    CONTENT_TYPE: 'Content-Type',
+    API_KEY: 'X-API-KEY',
+    CONTENT_TYPE_JSON: 'application/json',
+  },
+};
+
+// Types
 interface DeviceData {
   device_id: string;
   hash: string;
@@ -34,11 +51,12 @@ interface LocationData {
   latitude: string;
 }
 
-interface AppPricing {
+interface AppPricingConfig {
   apiKey: string;
   deviceId: string;
   baseUrl: string;
   initialized: boolean;
+  enableLogging: boolean;
 }
 
 interface Plan {
@@ -48,218 +66,317 @@ interface Plan {
   updated_at: string;
 }
 
-const APP_PRICING_BASE_URL = 'https://dash.apppricing.com/api';
+interface RequestDetails {
+  url?: string;
+  method?: string;
+  payload?: any;
+  statusCode?: number;
+}
 
-const AppPricing: AppPricing = {
+interface FetchResponse<T> {
+  ok: boolean;
+  data?: T;
+  error?: any;
+}
+
+// Configuration
+const DEFAULT_CONFIG: AppPricingConfig = {
   apiKey: '',
   deviceId: '',
-  baseUrl: APP_PRICING_BASE_URL,
+  baseUrl: CONSTANTS.BASE_URL,
   initialized: false,
+  enableLogging: true,
 };
 
-/**
- * Collects current device information
- */
-const getDeviceData = async (): Promise<DeviceData> => {
-  const deviceId = await DeviceInfo.getUniqueId();
-  const hash = await DeviceInfo.getUniqueId(); // Using uniqueId as hash
-  const now = new Date().toISOString();
-  const installDate = await DeviceInfo.getFirstInstallTime().then(
-    (timestamp: number) => new Date(timestamp).toISOString()
-  );
+// SDK State
+const AppPricing: AppPricingConfig = { ...DEFAULT_CONFIG };
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+// Helper for consistent logging
+const logMessage = (
+  message: string,
+  error?: any,
+  requestDetails?: RequestDetails
+) => {
+  if (AppPricing.enableLogging) {
+    const details = requestDetails
+      ? `[${requestDetails.method || 'GET'} ${requestDetails.url || ''} ${requestDetails.statusCode || ''}]`
+      : '';
 
-  // Get manufacturer (brand)
-  const brand = DeviceInfo.getBrand();
-
-  // Get operating system
-  const operatingSystem = DeviceInfo.getSystemName();
-  const osVersion = DeviceInfo.getSystemVersion();
-
-  // Default values before API call
-  let country = 'unknown';
-  let region = 'unknown';
-  let city = 'unknown';
-  let timezone = 'UTC';
-  let language = 'en-US';
-
-  try {
-    const locationResponse = await fetch(
-      'https://ifconfig.mehmetcansahin.com/json'
-    );
-    if (locationResponse.ok) {
-      const locationData: LocationData = await locationResponse.json();
-      country = locationData.country || 'unknown';
-      region = locationData.region || 'unknown';
-      city = locationData.city || 'unknown';
-
-      // Use API timezone if available
-      if (locationData.timezone) {
-        timezone = locationData.timezone;
+    if (error) {
+      console.error(`AppPricing: ${message} ${details}`, error);
+      if (requestDetails?.payload) {
+        console.error('Request payload:', requestDetails.payload);
       }
-
-      // Generate locale from country_code if available
-      if (locationData.country_code) {
-        const countryCode = locationData.country_code;
-
-        // Direct mapping from country code to primary language
-        const countryToLanguage: Record<string, string> = {
-          US: 'en',
-          GB: 'en',
-          CA: 'en',
-          AU: 'en',
-          NZ: 'en',
-          FR: 'fr',
-          DE: 'de',
-          IT: 'it',
-          ES: 'es',
-          PT: 'pt',
-          BR: 'pt',
-          NL: 'nl',
-          BE: 'nl',
-          TR: 'tr',
-          RU: 'ru',
-          JP: 'ja',
-          CN: 'zh',
-          TW: 'zh',
-          KR: 'ko',
-          AR: 'es',
-          MX: 'es',
-          CL: 'es',
-          CO: 'es',
-          IN: 'hi',
-          PL: 'pl',
-          SE: 'sv',
-          NO: 'no',
-          DK: 'da',
-          FI: 'fi',
-          CZ: 'cs',
-          GR: 'el',
-          IL: 'he',
-          SA: 'ar',
-          AE: 'ar',
-          TH: 'th',
-          VN: 'vi',
-          ID: 'id',
-          MY: 'ms',
-          PH: 'tl',
-        };
-
-        // Get the language for this country or default to English
-        const primaryLanguage = countryToLanguage[countryCode] || 'en';
-
-        // Create a locale string
-        language = `${primaryLanguage}-${countryCode}`;
+    } else {
+      console.log(`AppPricing: ${message} ${details}`);
+      if (requestDetails?.payload) {
+        console.log('Request payload:', requestDetails.payload);
       }
     }
-  } catch (error) {
-    console.error('Failed to fetch location data:', error);
-    // Using default values if API fails
   }
+};
 
-  return {
-    device_id: deviceId,
-    hash: hash,
-    distinct: true,
-    country: country,
-    region: region,
-    city: city,
-    timezone: timezone,
-    first_seen: installDate,
-    last_seen: now,
-    engagement_time: 0, // This would need to be tracked over time
-    session_count: 1, // Starting with 1, will be incremented by API
-    language: language,
-    marka: brand,
-    model: await DeviceInfo.getModel(),
-    os: operatingSystem,
-    os_version: osVersion,
-    screen_height: Math.round(screenHeight),
-    screen_width: Math.round(screenWidth),
-  };
+// API Service
+const ApiService = {
+  async fetch<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<FetchResponse<T>> {
+    const method = options.method || 'GET';
+    let payload;
+
+    try {
+      if (options.body && typeof options.body === 'string') {
+        try {
+          payload = JSON.parse(options.body);
+        } catch (e) {
+          payload = options.body;
+        }
+      } else {
+        payload = options.body;
+      }
+
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        logMessage(
+          `API error: ${response.status} ${response.statusText}`,
+          null,
+          {
+            url,
+            method,
+            payload,
+            statusCode: response.status,
+          }
+        );
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      // Log successful requests
+      logMessage('API request successful', null, {
+        url,
+        method,
+        payload,
+        statusCode: response.status,
+      });
+
+      return { ok: true, data: await response.json() };
+    } catch (error) {
+      logMessage(`Fetch error`, error, { url, method, payload });
+      return { ok: false, error };
+    }
+  },
+
+  getAuthHeaders() {
+    return {
+      [CONSTANTS.HEADERS.CONTENT_TYPE]: CONSTANTS.HEADERS.CONTENT_TYPE_JSON,
+      [CONSTANTS.HEADERS.API_KEY]: AppPricing.apiKey,
+    };
+  },
+
+  // API Endpoints
+  async getLocationData(): Promise<LocationData | null> {
+    const response = await this.fetch<LocationData>(CONSTANTS.LOCATION_API_URL);
+    return response.ok ? response.data || null : null;
+  },
+
+  async sendDeviceData(deviceData: DeviceData): Promise<boolean> {
+    const url = `${AppPricing.baseUrl}/device_data`;
+    const response = await this.fetch(url, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(deviceData),
+    });
+    return response.ok;
+  },
+
+  async incrementSession(deviceId: string): Promise<boolean> {
+    const url = `${AppPricing.baseUrl}/device_data/${deviceId}/increment_session`;
+    const response = await this.fetch(url, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return response.ok;
+  },
+
+  async getAvailablePlans(): Promise<Plan[]> {
+    if (!AppPricing.initialized) {
+      logMessage('SDK not initialized. Call initialize() first');
+      return [];
+    }
+
+    const url = `${AppPricing.baseUrl}/device_data/${AppPricing.deviceId}/plans`;
+    const response = await this.fetch<{ plans: Plan[] }>(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.ok && response.data ? response.data.plans || [] : [];
+  },
+};
+
+// Device Service
+const DeviceService = {
+  async getDeviceData(): Promise<DeviceData> {
+    const deviceId = await DeviceInfo.getUniqueId();
+    const hash = await DeviceInfo.getFingerprint();
+    const now = new Date().toISOString();
+    const installDate = await DeviceInfo.getFirstInstallTime().then(
+      (timestamp: number) => new Date(timestamp).toISOString()
+    );
+
+    const { width: screenWidth, height: screenHeight } =
+      Dimensions.get('window');
+    const brand = DeviceInfo.getBrand();
+    const operatingSystem = DeviceInfo.getSystemName();
+    const osVersion = DeviceInfo.getSystemVersion();
+    const model = await DeviceInfo.getModel();
+
+    // Default location data
+    let country = CONSTANTS.DEFAULT_COUNTRY;
+    let region = CONSTANTS.DEFAULT_REGION;
+    let city = CONSTANTS.DEFAULT_CITY;
+    let timezone = CONSTANTS.DEFAULT_TIMEZONE;
+    let language = CONSTANTS.DEFAULT_LANGUAGE;
+
+    try {
+      const locationData = await ApiService.getLocationData();
+
+      if (locationData) {
+        country = locationData.country || CONSTANTS.DEFAULT_COUNTRY;
+        region = locationData.region || CONSTANTS.DEFAULT_REGION;
+        city = locationData.city || CONSTANTS.DEFAULT_CITY;
+        timezone = locationData.timezone || CONSTANTS.DEFAULT_TIMEZONE;
+
+        // Generate locale from country_code if available
+        if (locationData.country_code) {
+          // Direct mapping from country code to primary language
+          const countryToLanguage: Record<string, string> = {
+            US: 'en',
+            GB: 'en',
+            CA: 'en',
+            AU: 'en',
+            NZ: 'en',
+            FR: 'fr',
+            DE: 'de',
+            IT: 'it',
+            ES: 'es',
+            PT: 'pt',
+            BR: 'pt',
+            NL: 'nl',
+            BE: 'nl',
+            TR: 'tr',
+            RU: 'ru',
+            JP: 'ja',
+            CN: 'zh',
+            TW: 'zh',
+            KR: 'ko',
+            AR: 'es',
+            MX: 'es',
+            CL: 'es',
+            CO: 'es',
+            IN: 'hi',
+            PL: 'pl',
+            SE: 'sv',
+            NO: 'no',
+            DK: 'da',
+            FI: 'fi',
+            CZ: 'cs',
+            GR: 'el',
+            IL: 'he',
+            SA: 'ar',
+            AE: 'ar',
+            TH: 'th',
+            VN: 'vi',
+            ID: 'id',
+            MY: 'ms',
+            PH: 'tl',
+          };
+
+          // Get the language for this country or default to English
+          const primaryLanguage =
+            countryToLanguage[locationData.country_code] || 'en';
+          language = `${primaryLanguage}-${locationData.country_code}`;
+        }
+      }
+    } catch (error) {
+      logMessage('Failed to fetch location data', error);
+      // Using default values if API fails
+    }
+
+    return {
+      device_id: deviceId,
+      hash: hash,
+      distinct: true,
+      country,
+      region,
+      city,
+      timezone,
+      first_seen: installDate,
+      last_seen: now,
+      engagement_time: 0,
+      session_count: 1,
+      language,
+      marka: brand,
+      model,
+      os: operatingSystem,
+      os_version: osVersion,
+      screen_height: Math.round(screenHeight),
+      screen_width: Math.round(screenWidth),
+    };
+  },
 };
 
 /**
- * Initializes the AppPricing SDK with your API key
+ * Initializes the AppPricing SDK with your API key and optional configuration
  */
-export const initialize = async (apiKey: string): Promise<boolean> => {
+export const initialize = async (
+  apiKey: string,
+  config?: Partial<AppPricingConfig>
+): Promise<boolean> => {
   try {
+    if (AppPricing.initialized) {
+      return true; // Already initialized
+    }
+
     if (!apiKey) {
-      console.error('AppPricing: API key is required');
+      logMessage('API key is required');
       return false;
     }
 
-    AppPricing.apiKey = apiKey;
+    // Apply configuration
+    Object.assign(AppPricing, { ...DEFAULT_CONFIG, ...config, apiKey });
 
-    // Get device data
-    const deviceData = await getDeviceData();
-    AppPricing.deviceId = deviceData.device_id;
+    try {
+      // Get device data
+      const deviceData = await DeviceService.getDeviceData();
+      AppPricing.deviceId = deviceData.device_id;
 
-    // Send device data to the API
-    await sendDeviceData(deviceData);
-
-    // Increment session count
-    await incrementSession(deviceData.device_id);
-
-    AppPricing.initialized = true;
-    return true;
-  } catch (error) {
-    console.error('AppPricing: Initialization failed', error);
-    return false;
-  }
-};
-
-/**
- * Sends device data to the AppPricing API
- */
-export const sendDeviceData = async (
-  deviceData: DeviceData
-): Promise<boolean> => {
-  try {
-    const response = await fetch(`${AppPricing.baseUrl}/device_data`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': AppPricing.apiKey,
-      },
-      body: JSON.stringify(deviceData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to send device data: ${response.status}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('AppPricing: Failed to send device data', error);
-    return false;
-  }
-};
-
-/**
- * Increments the session count for a device
- */
-export const incrementSession = async (deviceId: string): Promise<boolean> => {
-  try {
-    const response = await fetch(
-      `${AppPricing.baseUrl}/device_data/${deviceId}/increment_session`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': AppPricing.apiKey,
-        },
+      // Send device data to the API
+      const dataSent = await ApiService.sendDeviceData(deviceData);
+      if (!dataSent) {
+        logMessage('Failed to send device data, but continuing initialization');
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to increment session: ${response.status}`);
+      // Increment session count
+      const sessionIncremented = await ApiService.incrementSession(
+        deviceData.device_id
+      );
+      if (!sessionIncremented) {
+        logMessage(
+          'Failed to increment session, but continuing initialization'
+        );
+      }
+
+      AppPricing.initialized = true;
+      logMessage('Successfully initialized');
+      return true;
+    } catch (error) {
+      logMessage('Error during initialization', error);
+      return false;
     }
-
-    return true;
   } catch (error) {
-    console.error('AppPricing: Failed to increment session', error);
+    logMessage('Initialization failed', error);
     return false;
   }
 };
@@ -268,38 +385,10 @@ export const incrementSession = async (deviceId: string): Promise<boolean> => {
  * Gets available plans for the current device
  */
 export const getAvailablePlans = async (): Promise<Plan[]> => {
-  if (!AppPricing.initialized) {
-    console.error('AppPricing: SDK not initialized. Call initialize() first');
-    return [];
-  }
-
-  try {
-    const response = await fetch(
-      `${AppPricing.baseUrl}/device_data/${AppPricing.deviceId}/plans`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': AppPricing.apiKey,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get available plans: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.plans || [];
-  } catch (error) {
-    console.error('AppPricing: Failed to get available plans', error);
-    return [];
-  }
+  return ApiService.getAvailablePlans();
 };
 
 export default {
   initialize,
   getAvailablePlans,
-  sendDeviceData,
-  incrementSession,
 };

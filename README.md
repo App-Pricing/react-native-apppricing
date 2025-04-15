@@ -35,6 +35,12 @@ import AppPricing from '@apppricing/react-native-apppricing';
 // Initialize the SDK with your API key
 await AppPricing.initialize('YOUR_API_KEY');
 
+// Or initialize with custom configuration
+await AppPricing.initialize('YOUR_API_KEY', {
+  baseUrl: 'https://custom-api.apppricing.com/api',
+  enableLogging: true
+});
+
 // Get available plans for the current device
 const plans = await AppPricing.getAvailablePlans();
 console.log('Available plans:', plans);
@@ -42,12 +48,23 @@ console.log('Available plans:', plans);
 
 ## API Reference
 
-### `initialize(apiKey: string): Promise<boolean>`
+### `initialize(apiKey: string, config?: AppPricingConfig): Promise<boolean>`
 
-Initializes the AppPricing SDK with your API key. This function automatically:
+Initializes the AppPricing SDK with your API key and optional configuration. This function automatically:
 - Collects device information
 - Sends device data to the AppPricing servers
 - Increments the session count for the device
+
+**Parameters:**
+- `apiKey` (required): Your AppPricing API key
+- `config` (optional): Configuration options
+
+```ts
+interface AppPricingConfig {
+  baseUrl?: string;        // API base URL (default: 'https://dash.apppricing.com/api')
+  enableLogging?: boolean; // Whether to enable debug logging (default: true)
+}
+```
 
 Returns a Promise that resolves to `true` if initialization was successful, `false` otherwise.
 
@@ -66,14 +83,25 @@ interface Plan {
 }
 ```
 
-### Device Data Collected
+## Error Handling
+
+The SDK includes robust error handling to ensure your app continues to function even if network requests fail. All API calls are safely wrapped with proper error handling.
+
+If logging is enabled (default), relevant error information will be logged to the console, including:
+- Request URL
+- HTTP method
+- Request payload
+- Status code (if available)
+- Error details
+
+## Device Data Collected
 
 The SDK collects the following device information and sends it to the AppPricing service:
 
 ```ts
 interface DeviceData {
   device_id: string;       // Unique device identifier
-  hash: string;            // Device hash
+  hash: string;            // Device fingerprint (different from device_id)
   distinct: boolean;       // Whether this is a distinct device
   country: string;         // User's country (retrieved via IP geolocation)
   region: string;          // User's region (retrieved via IP geolocation)
