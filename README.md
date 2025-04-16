@@ -1,8 +1,22 @@
-# react-native-apppricing
+# AppPricing SDK
 
-AppPricing SDK is an intelligent pricing optimization tool for mobile applications.
+**AppPricing SDK** is an intelligent pricing optimization tool for mobile applications. It leverages advanced algorithms to analyze user behavior and characteristics, delivering tailored pricing strategies for each individual user. By integrating this SDK, your app can dynamically display the right paywall—whether premium, standard, or basic—based on sophisticated backend analysis.
+
+Visit the [App Pricing Dashboard](https://dash.apppricing.com/) to manage your pricing strategies or more details.
+
+---
+
+## Features
+
+* **Dynamic Pricing**: Adjusts prices in real-time based on user behavior, location, and more.
+* **User Segmentation**: Categorizes users into pricing tiers for maximum profitability.
+* **Seamless Integration**: Easy-to-use SDK with minimal setup.
+
+---
 
 ## Installation
+
+### Step 1. Add the package to your project
 
 ```sh
 npm install @apppricing/react-native-apppricing
@@ -10,7 +24,7 @@ npm install @apppricing/react-native-apppricing
 yarn add @apppricing/react-native-apppricing
 ```
 
-### Required Dependencies
+### Step 2. Install required dependencies
 
 This SDK requires the following dependency:
 
@@ -27,24 +41,74 @@ For iOS, you may need to run:
 cd ios && pod install
 ```
 
-## Usage
+## Getting Started
+
+### 1. Initialize the SDK
 
 ```js
 import AppPricing from '@apppricing/react-native-apppricing';
 
-// Initialize the SDK with your API key
-await AppPricing.initialize('YOUR_API_KEY');
+// Initialize the SDK
+useEffect(() => {
+  const initializeSDK = async () => {
+    try {
+      await AppPricing.initialize('YOUR_API_KEY'); // Required: Your API key from AppPricing Dashboard
+      console.log('AppPricing SDK initialized successfully');
+    } catch (error) {
+      console.error('AppPricing SDK initialization failed:', error);
+    }
+  };
 
-// Or initialize with custom configuration
-await AppPricing.initialize('YOUR_API_KEY', {
-  baseUrl: 'https://custom-api.apppricing.com/api',
-  enableLogging: true
-});
-
-// Get available plans for the current device
-const plans = await AppPricing.getAvailablePlans();
-console.log('Available plans:', plans);
+  initializeSDK();
+}, []);
 ```
+
+To obtain your `YOUR_API_KEY`, log in to the AppPricing Dashboard, navigate to the Apps page, and copy your unique key.
+
+### 2. Fetching Plans
+
+After initializing the SDK, you can fetch available plans for the device and show the appropriate paywall:
+
+```js
+const [plans, setPlans] = useState([]);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState(null);
+
+const fetchPlans = async () => {
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    const availablePlans = await AppPricing.getAvailablePlans();
+    setPlans(availablePlans);
+
+    // Log the name of the first plan for demonstration
+    if (availablePlans.length > 0) {
+      console.log('Plan name:', availablePlans[0].name);
+    }
+  } catch (err) {
+    setError(err.message);
+    console.error('Error fetching plans:', err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
+
+### Best Practices
+
+1. **Pre-fetch Plans**
+   * Call `getAvailablePlans()` well before showing the paywall
+   * Don't wait for user interaction to fetch plans
+   * Cache the response to provide instant paywall display when needed
+   * This prevents unnecessary waiting time for users
+
+### Common Issues
+
+1. **Initialization Failures**
+   * Verify API key is correct
+   * Check internet connectivity
+   * Ensure dependencies are properly installed
 
 ## API Reference
 
@@ -69,8 +133,6 @@ interface AppPricingConfig {
 }
 ```
 
-Returns a Promise that resolves to `true` if initialization was successful, `false` otherwise.
-
 ### `getAvailablePlans(): Promise<Plan[]>`
 
 Gets a list of plans available for the current device.
@@ -85,17 +147,6 @@ interface Plan {
   updated_at: string;
 }
 ```
-
-## Error Handling
-
-The SDK includes robust error handling to ensure your app continues to function even if network requests fail. All API calls are safely wrapped with proper error handling.
-
-If logging is enabled (default), relevant error information will be logged to the console, including:
-- Request URL
-- HTTP method
-- Request payload
-- Status code (if available)
-- Error details
 
 ## Device Data Collected
 
@@ -123,20 +174,11 @@ interface DeviceData {
 }
 ```
 
-## Project Structure
+## Support
 
-The SDK is organized into the following modules:
+For technical support and inquiries:
 
-- `config`: SDK configuration and state management
-- `types`: TypeScript type definitions
-- `utils`: Utility functions like logging
-- `services`:
-  - `api`: API service for handling network requests
-  - `device`: Device service for gathering device information
-
-## Contributing
-
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+* Email: support@ondokuzon.com
 
 ## License
 
