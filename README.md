@@ -1,3 +1,5 @@
+![App Pricing](https://dash.apppricing.com/1x.png)
+
 # AppPricing SDK
 
 **AppPricing SDK** is an intelligent pricing optimization tool for mobile applications. It leverages advanced algorithms to analyze user behavior and characteristics, delivering tailored pricing strategies for each individual user. By integrating this SDK, your app can dynamically display the right paywall—whether premium, standard, or basic—based on sophisticated backend analysis.
@@ -11,6 +13,8 @@ Visit the [App Pricing Dashboard](https://dash.apppricing.com/) to manage your p
 * **Dynamic Pricing**: Adjusts prices in real-time based on user behavior, location, and more.
 * **User Segmentation**: Categorizes users into pricing tiers for maximum profitability.
 * **Seamless Integration**: Easy-to-use SDK with minimal setup.
+
+![App Pricing](https://dash.apppricing.com/3x.png)
 
 ---
 
