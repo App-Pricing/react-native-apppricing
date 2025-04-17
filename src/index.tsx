@@ -100,8 +100,18 @@ export const trackPayment = async (
 
   // Basic validation for required fields in each payment
   for (const payment of payments) {
-    if (!payment.type || (payment.type !== 'past' && payment.type !== 'new')) {
-      logMessage(`Invalid or missing payment type: ${payment.type}`);
+    // Check if amount is provided and is a number
+    if (
+      payment.amount === undefined ||
+      payment.amount === null ||
+      typeof payment.amount !== 'number'
+    ) {
+      logMessage(`Invalid or missing payment amount: ${payment.amount}`);
+      return false;
+    }
+    // Optional: Validate type if provided
+    if (payment.type && payment.type !== 'past' && payment.type !== 'new') {
+      logMessage(`Invalid payment type provided: ${payment.type}`);
       return false;
     }
   }

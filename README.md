@@ -181,13 +181,13 @@ Tracks one or more payment events associated with the current device. Call this 
 - `payments` (required): An array of `PaymentInfo` objects.
 
 ```ts
-// Defined in src/types/index.ts
 export type PaymentType = 'past' | 'new';
 
 export interface PaymentInfo {
-  type: PaymentType;            // Required: 'new' for recent payments, 'past' for historical
-  amount?: number | null;      // Optional: The amount paid
+  amount: number;              // Required: The amount paid
+  type?: PaymentType | null;   // Optional: 'new' for recent payments, 'past' for historical
   paid_at?: Date | string | null; // Optional: When the payment occurred (Date object or ISO string). Defaults to now on the backend if null/omitted.
+  currency?: string | null;    // Optional: The currency code (e.g., 'USD', 'EUR')
   details?: string | null;     // Optional: Any additional details (e.g., subscription ID, product SKU)
 }
 ```
@@ -199,9 +199,10 @@ import AppPricing from '@apppricing/react-native-apppricing';
 
 const paymentDetails = [
   {
-    type: 'new', // This is a new payment
     amount: 19.99,
-    paid_at: new Date(), // Use current time
+    type: 'new',
+    currency: 'USD',
+    paid_at: new Date(),
     details: 'Premium Subscription - Annual'
   }
 ];
@@ -219,8 +220,9 @@ AppPricing.trackPayment(paymentDetails)
 // Example tracking a past payment without amount/details
 const pastPayment = [
   {
+    amount: 100,
     type: 'past',
-    paid_at: '2023-01-15T10:00:00Z' // Specific past date
+    paid_at: '2023-01-15T10:00:00Z'
   }
 ];
 AppPricing.trackPayment(pastPayment);
