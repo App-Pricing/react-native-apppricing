@@ -1,5 +1,12 @@
 import { AppPricing } from '../config';
-import type { DeviceData, FetchResponse, LocationData, Plan } from '../types';
+import type {
+  DeviceData,
+  FetchResponse,
+  LocationData,
+  PaymentInfo,
+  PaymentPayload,
+  Plan,
+} from '../types';
 import { logMessage } from '../utils/logger';
 
 /**
@@ -107,5 +114,56 @@ export const ApiService = {
     });
 
     return response.ok && response.data ? response.data.plans || [] : [];
+  },
+
+  async trackPageView(
+    pageName: string,
+    visitedAt?: Date | string
+  ): Promise<boolean> {
+    if (!AppPricing.initialized || !AppPricing.deviceId) {
+      logMessage('SDK not initialized or deviceId missing');
+      return false;
+    }
+
+    const url = `${AppPricing.baseUrl}/pages`;
+    const payload = {
+      device_id: AppPricing.deviceId,
+      page_name: pageName,
+      visited_at: visitedAt
+        ? new Date(visitedAt).toISOString()
+        : new Date().toISOString(),
+    };
+
+    const response = await this.fetch(url, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    return response.ok;
+  },
+
+  async sendPaymentData(payments: PaymentInfo[]): Promise<boolean> {
+    if (!AppPricing.initialized || !AppPricing.deviceId) {
+      logMessage('SDK not initialized or deviceId missing');
+      return false;
+    }
+
+    const url = `${AppPricing.baseUrl}/payments`;
+    const payload: PaymentPayload = {
+      device_id: AppPricing.deviceId,
+      payments: payments.map((p) => ({
+        ...p,
+        paid_at: p.paid_at ? new Date(p.paid_at).toISOString() : null,
+      })),
+    };
+
+    const response = await this.fetch(url, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    return response.ok;
   },
 };

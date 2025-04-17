@@ -152,6 +152,81 @@ interface Plan {
 }
 ```
 
+### `trackPageView(pageName: string, visitedAt?: Date | string): Promise<boolean>`
+
+Tracks a page view event to AppPricing. This helps track user navigation patterns.
+
+**Parameters:**
+- `pageName` (required): The name or identifier of the page visited (e.g., 'SettingsScreen', 'ProductDetailPage').
+- `visitedAt` (optional): A `Date` object or ISO date string representing when the page was visited. If omitted, the current timestamp is used.
+
+**Example:**
+
+```js
+import AppPricing from '@apppricing/react-native-apppricing';
+
+// Track that the user visited the 'Profile' screen now
+AppPricing.trackPageView('Profile');
+
+// Track that the user visited the 'Checkout' screen at a specific time
+const specificTime = new Date();
+AppPricing.trackPageView('Checkout', specificTime);
+```
+
+### `trackPayment(payments: PaymentInfo[]): Promise<boolean>`
+
+Tracks one or more payment events associated with the current device. Call this after a user completes a purchase or payment action.
+
+**Parameters:**
+- `payments` (required): An array of `PaymentInfo` objects.
+
+```ts
+// Defined in src/types/index.ts
+export type PaymentType = 'past' | 'new';
+
+export interface PaymentInfo {
+  type: PaymentType;            // Required: 'new' for recent payments, 'past' for historical
+  amount?: number | null;      // Optional: The amount paid
+  paid_at?: Date | string | null; // Optional: When the payment occurred (Date object or ISO string). Defaults to now on the backend if null/omitted.
+  details?: string | null;     // Optional: Any additional details (e.g., subscription ID, product SKU)
+}
+```
+
+**Example:**
+
+```js
+import AppPricing from '@apppricing/react-native-apppricing';
+
+const paymentDetails = [
+  {
+    type: 'new', // This is a new payment
+    amount: 19.99,
+    paid_at: new Date(), // Use current time
+    details: 'Premium Subscription - Annual'
+  }
+];
+
+// Send the payment information
+AppPricing.trackPayment(paymentDetails)
+  .then(success => {
+    if (success) {
+      console.log('Payment tracked successfully');
+    } else {
+      console.log('Failed to track payment');
+    }
+  });
+
+// Example tracking a past payment without amount/details
+const pastPayment = [
+  {
+    type: 'past',
+    paid_at: '2023-01-15T10:00:00Z' // Specific past date
+  }
+];
+AppPricing.trackPayment(pastPayment);
+
+```
+
 ## Device Data Collected
 
 The SDK collects the following device information and sends it to the AppPricing service:

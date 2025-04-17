@@ -1,7 +1,7 @@
 import { AppPricing } from './config';
 import { ApiService } from './services/api';
 import { DeviceService } from './services/device';
-import type { AppPricingConfig, Plan } from './types';
+import type { AppPricingConfig, PaymentInfo, Plan } from './types';
 import { logMessage } from './utils/logger';
 
 /**
@@ -65,7 +65,53 @@ export const getAvailablePlans = async (): Promise<Plan[]> => {
   return ApiService.getAvailablePlans();
 };
 
+/**
+ * Tracks a page view event for the current device
+ * @param pageName Name or identifier of the page viewed
+ * @param visitedAt Optional timestamp of when the page was visited (defaults to now)
+ */
+export const trackPageView = async (
+  pageName: string,
+  visitedAt?: Date | string
+): Promise<boolean> => {
+  if (!AppPricing.initialized) {
+    logMessage('SDK not initialized. Call initialize() first');
+    return false;
+  }
+  return ApiService.trackPageView(pageName, visitedAt);
+};
+
+/**
+ * Tracks payment events associated with the current device.
+ * @param payments An array of payment information objects.
+ */
+export const trackPayment = async (
+  payments: PaymentInfo[]
+): Promise<boolean> => {
+  if (!AppPricing.initialized) {
+    logMessage('SDK not initialized. Call initialize() first');
+    return false;
+  }
+
+  if (!Array.isArray(payments) || payments.length === 0) {
+    logMessage('Payments array must be provided and cannot be empty');
+    return false;
+  }
+
+  // Basic validation for required fields in each payment
+  for (const payment of payments) {
+    if (!payment.type || (payment.type !== 'past' && payment.type !== 'new')) {
+      logMessage(`Invalid or missing payment type: ${payment.type}`);
+      return false;
+    }
+  }
+
+  return ApiService.sendPaymentData(payments);
+};
+
 export default {
   initialize,
   getAvailablePlans,
+  trackPageView,
+  trackPayment,
 };

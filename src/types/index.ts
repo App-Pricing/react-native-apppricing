@@ -57,3 +57,17 @@ export interface FetchResponse<T> {
   data?: T;
   error?: any;
 }
+
+export type PaymentType = 'past' | 'new';
+
+export interface PaymentInfo {
+  type: PaymentType;
+  amount?: number | null;
+  paid_at?: Date | string | null;
+  details?: string | null;
+}
+
+export interface PaymentPayload {
+  device_id: string;
+  payments: PaymentInfo[];
+}
