@@ -46,7 +46,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/App-Pricing/react-native-apppricing"
+    "url": "git+https://github.com/App-Pricing/react-native-apppricing.git"
   },
   "author": "apppricing <support@ondokuzon.com> (https://github.com/App-Pricing)",
   "license": "MIT",
