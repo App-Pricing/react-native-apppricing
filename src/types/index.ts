@@ -58,11 +58,10 @@ export interface FetchResponse<T> {
   error?: any;
 }
 
-export type PaymentType = 'past' | 'new';
-
 export interface PaymentInfo {
-  type?: PaymentType | null;
+  type?: string | null;
   amount: number;
+  product_id: string;
   paid_at?: Date | string | null;
   currency?: string | null;
   details?: string | null;

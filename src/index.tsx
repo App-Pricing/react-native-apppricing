@@ -109,9 +109,11 @@ export const trackPayment = async (
       logMessage(`Invalid or missing payment amount: ${payment.amount}`);
       return false;
     }
-    // Optional: Validate type if provided
-    if (payment.type && payment.type !== 'past' && payment.type !== 'new') {
-      logMessage(`Invalid payment type provided: ${payment.type}`);
+    // Check if product_id is provided and is a string
+    if (!payment.product_id || typeof payment.product_id !== 'string') {
+      logMessage(
+        `Invalid or missing payment product_id: ${payment.product_id}`
+      );
       return false;
     }
   }
