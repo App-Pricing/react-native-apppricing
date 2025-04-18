@@ -1,7 +1,8 @@
 import { AppPricing } from './config';
 import { ApiService } from './services/api';
 import { DeviceService } from './services/device';
-import type { AppPricingConfig, PaymentInfo, Plan } from './types';
+import type { AppPricingConfig, PaymentInfo, PaymentType, Plan } from './types';
+import { AllowedPaymentTypes } from './types';
 import { logMessage } from './utils/logger';
 
 /**
@@ -109,11 +110,25 @@ export const trackPayment = async (
       logMessage(`Invalid or missing payment amount: ${payment.amount}`);
       return false;
     }
-    // Check if product_id is provided and is a string
-    if (!payment.product_id || typeof payment.product_id !== 'string') {
+    // Check if product_id is provided (not null/undefined) AND is not a string
+    if (
+      payment.product_id !== undefined &&
+      payment.product_id !== null &&
+      typeof payment.product_id !== 'string'
+    ) {
       logMessage(
-        `Invalid or missing payment product_id: ${payment.product_id}`
+        `Invalid payment product_id: Expected a string but received ${typeof payment.product_id}`
       );
+      return false;
+    }
+
+    // Check if type is provided and if it's one of the allowed values
+    if (
+      payment.type !== undefined &&
+      payment.type !== null &&
+      !AllowedPaymentTypes.includes(payment.type as PaymentType)
+    ) {
+      logMessage(`Invalid payment type provided: ${payment.type}`);
       return false;
     }
   }

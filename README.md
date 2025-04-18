@@ -181,14 +181,26 @@ Tracks one or more payment events associated with the current device. Call this 
 - `payments` (required): An array of `PaymentInfo` objects.
 
 ```ts
-export type PaymentType = 'past' | 'new';
+// Updated PaymentType definition
+export type PaymentType =
+  | 'trial'
+  | 'new_sub'
+  | 'renewal'
+  | 'upgrade'
+  | 'downgrade'
+  | 'resubscribe'
+  | 'refund'
+  | 'offer'
+  | 'promo';
 
+// Updated PaymentInfo interface
 export interface PaymentInfo {
   amount: number;              // Required: The amount paid
-  type?: PaymentType | null;   // Optional: 'new' for recent payments, 'past' for historical
+  product_id: string;          // Required: The identifier of the product/plan purchased
+  type?: PaymentType | null;   // Optional: Type of payment event (see PaymentType)
   paid_at?: Date | string | null; // Optional: When the payment occurred (Date object or ISO string). Defaults to now on the backend if null/omitted.
   currency?: string | null;    // Optional: The currency code (e.g., 'USD', 'EUR')
-  details?: string | null;     // Optional: Any additional details (e.g., subscription ID, product SKU)
+  details?: string | null;     // Optional: Any additional details (e.g., transaction ID)
 }
 ```
 
@@ -200,10 +212,11 @@ import AppPricing from '@apppricing/react-native-apppricing';
 const paymentDetails = [
   {
     amount: 19.99,
-    type: 'new',
+    product_id: 'premium_annual_plan', // Added product_id
+    type: 'new_sub', // Updated type value
     currency: 'USD',
     paid_at: new Date(),
-    details: 'Premium Subscription - Annual'
+    details: 'Transaction ID: 12345abc'
   }
 ];
 
@@ -221,7 +234,8 @@ AppPricing.trackPayment(paymentDetails)
 const pastPayment = [
   {
     amount: 100,
-    type: 'past',
+    product_id: 'basic_monthly_plan', // Added product_id
+    type: 'renewal', // Updated type value
     paid_at: '2023-01-15T10:00:00Z'
   }
 ];

@@ -58,10 +58,26 @@ export interface FetchResponse<T> {
   error?: any;
 }
 
+// Define the array of allowed payment types as the source of truth with "as const"
+export const AllowedPaymentTypes = [
+  'trial',
+  'new_sub',
+  'renewal',
+  'upgrade',
+  'downgrade',
+  'resubscribe',
+  'refund',
+  'offer',
+  'promo',
+] as const;
+
+// Derive the PaymentType type alias from the array
+export type PaymentType = (typeof AllowedPaymentTypes)[number];
+
 export interface PaymentInfo {
-  type?: string | null;
+  type?: PaymentType | null;
   amount: number;
-  product_id: string;
+  product_id?: string | null;
   paid_at?: Date | string | null;
   currency?: string | null;
   details?: string | null;
