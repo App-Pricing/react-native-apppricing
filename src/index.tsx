@@ -1,10 +1,11 @@
 import { AppPricing } from './config';
 import { ApiService } from './services/api';
 import { DeviceService } from './services/device';
-import type { AppPricingConfig, PaymentInfo, PaymentType, Plan } from './types';
-import { AllowedPaymentTypes } from './types';
+import type { AppPricingConfig, PaymentInfo, Plan } from './types';
+import { PaymentType } from './types';
 import { logMessage } from './utils/logger';
-export type { AppPricingConfig, PaymentInfo, PaymentType, Plan };
+export { PaymentType };
+export type { AppPricingConfig, PaymentInfo, Plan };
 
 /**
  * Initializes the AppPricing SDK with your API key and optional configuration
@@ -127,7 +128,7 @@ export const trackPayment = async (
     if (
       payment.type !== undefined &&
       payment.type !== null &&
-      !AllowedPaymentTypes.includes(payment.type as PaymentType)
+      !Object.values(PaymentType).includes(payment.type as PaymentType)
     ) {
       logMessage(`Invalid payment type provided: ${payment.type}`);
       return false;
@@ -142,4 +143,5 @@ export default {
   getAvailablePlans,
   trackPageView,
   trackPayment,
+  PaymentType,
 };

@@ -59,21 +59,18 @@ export interface FetchResponse<T> {
   error?: any;
 }
 
-// Define the array of allowed payment types as the source of truth with "as const"
-export const AllowedPaymentTypes = [
-  'trial',
-  'new_sub',
-  'renewal',
-  'upgrade',
-  'downgrade',
-  'resubscribe',
-  'refund',
-  'offer',
-  'promo',
-] as const;
-
-// Derive the PaymentType type alias from the array
-export type PaymentType = (typeof AllowedPaymentTypes)[number];
+// Define PaymentType as an enum
+export enum PaymentType {
+  Trial = 'trial',
+  NewSub = 'new_sub',
+  Renewal = 'renewal',
+  Upgrade = 'upgrade',
+  Downgrade = 'downgrade',
+  Resubscribe = 'resubscribe',
+  Refund = 'refund',
+  Offer = 'offer',
+  Promo = 'promo',
+}
 
 export interface PaymentInfo {
   type?: PaymentType | null;
