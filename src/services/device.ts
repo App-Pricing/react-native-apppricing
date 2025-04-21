@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, NativeModules, Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import type { DeviceData } from '../types';
 import { logMessage } from '../utils/logger';
@@ -23,76 +23,101 @@ export const DeviceService = {
     const osVersion = DeviceInfo.getSystemVersion();
     const model = await DeviceInfo.getModel();
 
-    // Default location data
+    // Default location data and language
     let country = 'unknown';
     let region = 'unknown';
     let city = 'unknown';
     let timezone = 'UTC';
-    let language = 'en-US';
+    let language: string | undefined;
 
+    // Attempt to get language from native modules first
     try {
-      const locationData = await ApiService.getLocationData();
-
-      if (locationData) {
-        country = locationData.country || 'unknown';
-        region = locationData.region || 'unknown';
-        city = locationData.city || 'unknown';
-        timezone = locationData.timezone || 'UTC';
-
-        // Generate locale from country_code if available
-        if (locationData.country_code) {
-          // Direct mapping from country code to primary language
-          const countryToLanguage: Record<string, string> = {
-            US: 'en',
-            GB: 'en',
-            CA: 'en',
-            AU: 'en',
-            NZ: 'en',
-            FR: 'fr',
-            DE: 'de',
-            IT: 'it',
-            ES: 'es',
-            PT: 'pt',
-            BR: 'pt',
-            NL: 'nl',
-            BE: 'nl',
-            TR: 'tr',
-            RU: 'ru',
-            JP: 'ja',
-            CN: 'zh',
-            TW: 'zh',
-            KR: 'ko',
-            AR: 'es',
-            MX: 'es',
-            CL: 'es',
-            CO: 'es',
-            IN: 'hi',
-            PL: 'pl',
-            SE: 'sv',
-            NO: 'no',
-            DK: 'da',
-            FI: 'fi',
-            CZ: 'cs',
-            GR: 'el',
-            IL: 'he',
-            SA: 'ar',
-            AE: 'ar',
-            TH: 'th',
-            VN: 'vi',
-            ID: 'id',
-            MY: 'ms',
-            PH: 'tl',
-          };
-
-          // Get the language for this country or default to English
-          const primaryLanguage =
-            countryToLanguage[locationData.country_code] || 'en';
-          language = `${primaryLanguage}-${locationData.country_code}`;
-        }
+      if (Platform.OS === 'ios') {
+        language =
+          NativeModules.SettingsManager.settings.AppleLocale ||
+          NativeModules.SettingsManager.settings.AppleLanguages[0]; // Fallback to the first language in the array
+      } else {
+        language = NativeModules.I18nManager.localeIdentifier;
+      }
+      // Normalize language tag (e.g., "en_US" to "en-US")
+      if (language) {
+        language = language.replace('_', '-');
       }
     } catch (error) {
-      logMessage('Failed to fetch location data', error);
-      // Using default values if API fails
+      logMessage('Failed to get language from native modules', error);
+    }
+
+    // If language is still not determined, try fetching location data
+    if (!language) {
+      try {
+        const locationData = await ApiService.getLocationData();
+
+        if (locationData) {
+          country = locationData.country || 'unknown';
+          region = locationData.region || 'unknown';
+          city = locationData.city || 'unknown';
+          timezone = locationData.timezone || 'UTC';
+
+          // Generate locale from country_code if available and language not set natively
+          if (locationData.country_code) {
+            // Direct mapping from country code to primary language
+            const countryToLanguage: Record<string, string> = {
+              US: 'en',
+              GB: 'en',
+              CA: 'en',
+              AU: 'en',
+              NZ: 'en',
+              FR: 'fr',
+              DE: 'de',
+              IT: 'it',
+              ES: 'es',
+              PT: 'pt',
+              BR: 'pt',
+              NL: 'nl',
+              BE: 'nl',
+              TR: 'tr',
+              RU: 'ru',
+              JP: 'ja',
+              CN: 'zh',
+              TW: 'zh',
+              KR: 'ko',
+              AR: 'es',
+              MX: 'es',
+              CL: 'es',
+              CO: 'es',
+              IN: 'hi',
+              PL: 'pl',
+              SE: 'sv',
+              NO: 'no',
+              DK: 'da',
+              FI: 'fi',
+              CZ: 'cs',
+              GR: 'el',
+              IL: 'he',
+              SA: 'ar',
+              AE: 'ar',
+              TH: 'th',
+              VN: 'vi',
+              ID: 'id',
+              MY: 'ms',
+              PH: 'tl',
+            };
+
+            // Get the language for this country or default to English
+            const primaryLanguage =
+              countryToLanguage[locationData.country_code] || 'en';
+            language = `${primaryLanguage}-${locationData.country_code}`;
+          }
+        }
+      } catch (error) {
+        logMessage('Failed to fetch location data', error);
+        // Using default values if API fails
+      }
+    }
+
+    // Final fallback if language is still not determined
+    if (!language) {
+      language = 'en-US';
     }
 
     return {
