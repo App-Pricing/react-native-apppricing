@@ -19,46 +19,72 @@ export const ApiService = {
   ): Promise<FetchResponse<T>> {
     const method = options.method || 'GET';
     let payload;
+    let response: Response | undefined; // Keep response reference
 
     try {
+      // Attempt to parse payload for logging if it's a JSON string
       if (options.body && typeof options.body === 'string') {
         try {
           payload = JSON.parse(options.body);
         } catch (e) {
-          payload = options.body;
+          payload = options.body; // Keep original body if not JSON
         }
       } else {
-        payload = options.body;
+        payload = options.body; // Keep original body if not string or not present
       }
 
-      const response = await fetch(url, options);
+      response = await fetch(url, options); // Perform the fetch
 
       if (!response.ok) {
-        logMessage(
-          `API error: ${response.status} ${response.statusText}`,
-          null,
-          {
-            url,
-            method,
-            payload,
-            statusCode: response.status,
-          }
-        );
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
+        let errorText = response.statusText; // Default error text
+        try {
+          // Try to get more specific error text from the response body
+          errorText = await response.text();
+          logMessage('Received error response body:', errorText); // Log the raw error text
+        } catch (textError) {
+          // Ignore error reading response text, use statusText
+          logMessage('Could not read error response body', textError);
+        }
+
+        const errorMessage = `API error: ${response.status} - ${errorText}`;
+        // Log detailed error information including the response text if available
+        logMessage(errorMessage, null, {
+          url,
+          method,
+          payload,
+          statusCode: response.status,
+          responseText:
+            errorText !== response.statusText ? errorText : undefined, // Add response text if successfully read
+        });
+        throw new Error(errorMessage); // Throw error to be caught by the outer catch
       }
 
-      // Log successful requests
+      // Log successful requests (consider removing payload logging for sensitive data if necessary)
       logMessage('API request successful', null, {
         url,
         method,
-        payload,
+        // payload, // Commented out: Avoid logging potentially sensitive request bodies on success
         statusCode: response.status,
       });
 
-      return { ok: true, data: await response.json() };
-    } catch (error) {
-      logMessage(`Fetch error`, error, { url, method, payload });
-      return { ok: false, error };
+      // Try parsing JSON response
+      const data = await response.json();
+      return { ok: true, data };
+    } catch (error: any) {
+      // Catch errors from fetch(), !response.ok throw, or response.json()
+      // Log the caught error along with request context
+      logMessage(`Fetch processing error`, error, {
+        url,
+        method,
+        payload, // Log payload in case of error for debugging
+        statusCode: response?.status, // Include status code if response object exists
+      });
+
+      // Ensure the error message passed back is a string
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      // Return a standardized error response
+      return { ok: false, error: errorMessage };
     }
   },
 

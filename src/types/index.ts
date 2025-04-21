@@ -50,6 +50,7 @@ export interface RequestDetails {
   method?: string;
   payload?: any;
   statusCode?: number;
+  responseText?: string;
 }
 
 export interface FetchResponse<T> {
