@@ -4,6 +4,7 @@ import { DeviceService } from './services/device';
 import type { AppPricingConfig, PaymentInfo, PaymentType, Plan } from './types';
 import { AllowedPaymentTypes } from './types';
 import { logMessage } from './utils/logger';
+export type { AppPricingConfig, PaymentInfo, PaymentType, Plan };
 
 /**
  * Initializes the AppPricing SDK with your API key and optional configuration
