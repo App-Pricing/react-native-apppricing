@@ -28,6 +28,7 @@ export interface LocationData {
   timezone: string;
   longitude: string;
   latitude: string;
+  language: string;
 }
 
 export interface AppPricingConfig {
